@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShopPOS - NOVAMART</title>
+<style>
+:root {
+  --primary: #6366f1;
+  --primary-dark: #4f46e5;
+  --primary-light: #818cf8;
+  --primary-050: #eef2ff;
+  --primary-100: #e0e7ff;
+  --bg: #f1f5f9;
+  --card: #ffffff;
+  --text: #1e293b;
+  --text-2: #64748b;
+  --border: #e2e8f0;
+  --danger: #ef4444;
+  --danger-bg: #fee2e2;
+  --green: #10b981;
+  --amber: #f59e0b;
+  --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-lg: 0 10px 25px -5px rgba(0,0,0,.1), 0 8px 10px -6px rgba(0,0,0,.05);
+  --radius: 12px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  overflow: hidden;
+  font-size: 14px;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 220px;
+  min-width: 220px;
+  background: linear-gradient(180deg, #312e81 0%, #1e1b4b 100%);
+  color: #e0e7ff;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 50;
+}
+.sidebar-brand {
+  padding: 20px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.sidebar-brand .logo-icon {
+  width: 38px; height: 38px;
+  background: linear-gradient(135deg, var(--primary-light), var(--primary));
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 17px; color: #fff;
+}
+.sidebar-brand .brand-text { line-height: 1.1; }
+.sidebar-brand .brand-text .brand-title { font-weight: 700; font-size: 16px; color: #fff; }
+.sidebar-brand .brand-text .brand-shop { font-size: 11px; color: #a5b4fc; letter-spacing: .5px; }
+.sidebar-nav { flex: 1; padding: 14px 10px; overflow-y: auto; }
+.sidebar-nav .nav-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #818cf8; padding: 10px 10px 6px; }
+.nav-item {
+  display: flex; align-items: center; gap: 11px;
+  padding: 11px 12px;
+  margin: 2px 0;
+  border-radius: 9px;
+  cursor: pointer;
+  color: #c7d2fe;
+  transition: background .18s, color .18s, transform .1s;
+  font-weight: 500;
+  user-select: none;
+}
+.nav-item:hover { background: rgba(255,255,255,.07); color: #fff; }
+.nav-item.active { background: var(--primary); color: #fff; box-shadow: 0 4px 12px rgba(99,102,241,.4); }
+.nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+.sidebar-footer {
+  padding: 14px;
+  border-top: 1px solid rgba(255,255,255,.08);
+  font-size: 11px; color: #a5b4fc; text-align: center;
+}
+
+/* Main */
+.main { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+.topbar {
+  height: 60px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 22px;
+  flex-shrink: 0;
+  z-index: 40;
+}
+.topbar .page-title { font-size: 18px; font-weight: 700; }
+.topbar .topbar-right { display: flex; align-items: center; gap: 14px; }
+.clock { font-weight: 600; font-size: 14px; color: var(--text-2); }
+.clock .clock-date { display: block; font-size: 11px; color: var(--text-2); }
+
+.content { flex: 1; overflow-y: auto; padding: 22px; }
+
+.page { display: none; animation: fadeIn .22s ease; }
+.page.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* Cards */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+/* Stats */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 16px; margin-bottom: 22px; }
+.stat-card { padding: 18px; display: flex; flex-direction: column; gap: 6px; position: relative; overflow: hidden; }
+.stat-card .stat-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  margin-bottom: 4px;
+}
+.stat-card .stat-label { font-size: 12px; color: var(--text-2); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+.stat-card .stat-value { font-size: 26px; font-weight: 800; }
+.stat-card .stat-sub { font-size: 12px; color: var(--text-2); }
+
+/* POS layout */
+.pos-layout { display: grid; grid-template-columns: 1fr 360px; gap: 18px; height: calc(100vh - 130px); }
+@media (max-width: 1000px) { .pos-layout { grid-template-columns: 1fr; } }
+.pos-products-col { display: flex; flex-direction: column; gap: 14px; overflow: hidden; }
+.pos-cart-col { display: flex; flex-direction: column; gap: 14px; overflow: hidden; }
+
+.filter-bar { display: flex; gap: 10px; align-items: center; }
+.search-box {
+  flex: 1;
+  display: flex; align-items: center; gap: 8px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 8px 12px;
+}
+.search-box svg { width: 16px; height: 16px; color: var(--text-2); }
+.search-box input { border: none; outline: none; flex: 1; font-size: 14px; font-family: inherit; background: transparent; }
+.cat-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.cat-chip {
+  padding: 7px 14px; border-radius: 20px;
+  background: var(--card); border: 1px solid var(--border);
+  cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-2);
+  transition: all .15s;
+}
+.cat-chip:hover { border-color: var(--primary-light); color: var(--primary); }
+.cat-chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+.product-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 14px;
+  overflow-y: auto;
+  padding: 4px;
+}
+.product-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all .18s;
+  display: flex; flex-direction: column; gap: 8px;
+  position: relative;
+}
+.product-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); border-color: var(--primary-light); }
+.product-card.out-of-stock { opacity: .45; pointer-events: none; }
+.product-card.low-stock { border-color: #fca5a5; }
+.product-img {
+  height: 90px; border-radius: 8px; overflow: hidden;
+  background: var(--primary-050);
+  display: flex; align-items: center; justify-content: center;
+}
+.product-img img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.product-name { font-weight: 600; font-size: 13px; line-height: 1.25; }
+.product-price { display: flex; align-items: center; justify-content: space-between; margin-top: auto; }
+.product-price .price { font-weight: 800; font-size: 15px; color: var(--primary-dark); }
+.stock-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+.stock-badge.ok { background: #d1fae5; color: #047857; }
+.stock-badge.low { background: #fee2e2; color: #b91c1c; }
+.stock-badge.out { background: #e2e8f0; color: #64748b; }
+
+/* Cart */
+.cart-panel { padding: 16px; display: flex; flex-direction: column; height: 100%; }
+.cart-panel h3 { font-size: 16px; margin-bottom: 12px; }
+.cart-meta { display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px; }
+.customer-select, .discount-input, .amount-input, .payment-select {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  background: #fff;
+  outline: none;
+}
+.customer-select:focus, .discount-input:focus, .amount-input:focus, .payment-select:focus { border-color: var(--primary-light); }
+.discount-row { display: flex; gap: 8px; }
+.discount-row input { flex: 1; }
+.discount-type-toggle {
+  display: flex; gap: 4px; background: var(--bg); padding: 3px; border-radius: 8px;
+}
+.discount-type-toggle button {
+  border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer;
+  background: transparent; font-weight: 600; font-size: 12px; color: var(--text-2);
+  transition: all .15s;
+}
+.discount-type-toggle button.active { background: var(--primary); color: #fff; }
+.cart-items { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+.cart-item {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg);
+  border-radius: 9px; padding: 8px;
+}
+.cart-item-img { width: 42px; height: 42px; border-radius: 7px; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
+.cart-item-img img { max-width: 100%; max-height: 100%; }
+.cart-item-info { flex: 1; min-width: 0; }
+.cart-item-name { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cart-item-price { font-size: 12px; color: var(--text-2); }
+.cart-item-qty { display: flex; align-items: center; gap: 5px; margin-top: 3px; }
+.qty-btn {
+  width: 22px; height: 22px; border-radius: 5px;
+  border: 1px solid var(--border); background: #fff; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 13px; color: var(--text);
+  transition: all .12s;
+}
+.qty-btn:hover { background: var(--primary-100); border-color: var(--primary-light); }
+.qty-btn:disabled { opacity: .4; cursor: not-allowed; }
+.cart-item-qty span { min-width: 22px; text-align: center; font-weight: 700; font-size: 13px; }
+.cart-item-remove { background: none; border: none; color: var(--text-2); cursor: pointer; padding: 4px; border-radius: 5px; }
+.cart-item-remove:hover { color: var(--danger); background: var(--danger-bg); }
+.cart-item-line { display: flex; flex-direction: column; align-items: flex-end; }
+.cart-item-total { font-weight: 700; font-size: 13px; }
+.cart-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-2); gap: 8px; height: 100%; }
+.cart-empty svg { width: 48px; height: 48px; opacity: .4; }
+
+.cart-totals { border-top: 1px solid var(--border); padding-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.total-row { display: flex; justify-content: space-between; font-size: 14px; }
+.total-row .label { color: var(--text-2); }
+.total-row.grand { font-weight: 800; font-size: 20px; padding-top: 6px; border-top: 1px dashed var(--border); margin-top: 4px; }
+.cart-actions { display: flex; gap: 10px; margin-top: 12px; }
+
+/* Buttons */
+.btn {
+  padding: 10px 16px; border-radius: 9px; border: none; cursor: pointer;
+  font-family: inherit; font-size: 14px; font-weight: 700;
+  transition: all .15s; display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+}
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-dark); box-shadow: 0 4px 12px rgba(99,102,241,.35); }
+.btn-primary:disabled { background: #c7d2fe; cursor: not-allowed; box-shadow: none; }
+.btn-secondary { background: var(--primary-100); color: var(--primary-dark); }
+.btn-secondary:hover { background: var(--primary-050); }
+.btn-danger-soft { background: var(--danger-bg); color: var(--danger); }
+.btn-danger-soft:hover { background: #fecaca; }
+.btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-2); }
+.btn-outline:hover { border-color: var(--primary-light); color: var(--primary); }
+.btn-success { background: var(--green); color: #fff; }
+.btn-success:hover { background: #059669; box-shadow: 0 4px 12px rgba(16,185,129,.35); }
+.btn-block { width: 100%; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* Tables */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+thead th {
+  text-align: left; padding: 12px 14px;
+  background: var(--primary-050);
+  color: var(--primary-dark);
+  font-size: 12px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .5px;
+  border-bottom: 2px solid var(--primary-100);
+  white-space: nowrap;
+}
+tbody td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  vertical-align: middle;
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: #f8fafc; }
+.td-img { width: 44px; height: 44px; border-radius: 8px; background: var(--primary-050); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.td-img img { max-width: 100%; max-height: 100%; }
+.pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 700; }
+.pill-green { background: #d1fae5; color: #047857; }
+.pill-red { background: #fee2e2; color: #b91c1c; }
+.pill-gray { background: #e2e8f0; color: #64748b; }
+.pill-indigo { background: var(--primary-100); color: var(--primary-dark); }
+
+/* Modal */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(15, 23, 42, .5);
+  display: none; align-items: center; justify-content: center;
+  z-index: 100; backdrop-filter: blur(3px);
+  padding: 20px;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: var(--card);
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  width: 100%; max-width: 460px;
+  max-height: 90vh; overflow-y: auto;
+  animation: modalIn .2s ease;
+}
+@keyframes modalIn { from { opacity: 0; transform: scale(.96) translateY(10px); } to { opacity: 1; transform: none; } }
+.modal-header { padding: 18px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.modal-header h3 { font-size: 17px; }
+.modal-close { background: none; border: none; font-size: 22px; color: var(--text-2); cursor: pointer; line-height: 1; padding: 2px 6px; border-radius: 6px; }
+.modal-close:hover { color: var(--danger); background: var(--danger-bg); }
+.modal-body { padding: 22px; display: flex; flex-direction: column; gap: 16px; }
+.modal-footer { padding: 16px 22px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; }
+
+.checkout-summary { background: var(--primary-050); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.checkout-summary .total-row .label, .checkout-summary .total-row { font-size: 14px; }
+.checkout-summary .chg { font-size: 24px; font-weight: 800; color: var(--green); }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group label { font-size: 12px; font-weight: 700; color: var(--text-2); text-transform: uppercase; letter-spacing: .5px; }
+
+/* Receipt */
+.receipt-wrap { max-width: 340px; margin: 0 auto; }
+.receipt { font-size: 13px; color: #000; line-height: 1.45; }
+.receipt .r-head { text-align: center; border-bottom: 2px dashed #94a3b8; padding-bottom: 10px; margin-bottom: 10px; }
+.receipt .r-shop { font-size: 18px; font-weight: 800; letter-spacing: 1px; }
+.receipt .r-centered { text-align: center; }
+.receipt hr { border: none; border-top: 1px dashed #94a3b8; margin: 8px 0; }
+.receipt .r-row { display: flex; justify-content: space-between; }
+.receipt .r-row .r-l { color: #475569; }
+.receipt .r-row .r-r { font-weight: 600; }
+.receipt .r-total-row { display: flex; justify-content: space-between; font-weight: 800; font-size: 15px; }
+.receipt .r-item { display: flex; justify-content: space-between; align-items: baseline; }
+.receipt table { width: 100%; }
+.receipt table td { padding: 3px 0; border: none; font-size: 13px; }
+.receipt .r-footer { text-align: center; border-top: 2px dashed #94a3b8; padding-top: 10px; margin-top: 10px; color: #475569; font-size: 12px; }
+
+/* section titles */
+.section { margin-bottom: 22px; }
+.section-title { font-size: 16px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+
+/* Expense grid */
+.expense-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+.expense-card { padding: 18px; border-left: 4px solid var(--primary); }
+.expense-card .expense-title { font-weight: 700; font-size: 15px; margin-bottom: 6px; }
+.expense-card .expense-cat { font-size: 12px; color: var(--text-2); margin-bottom: 8px; }
+.expense-card .expense-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+.expense-card .expense-amount { font-weight: 800; font-size: 18px; color: var(--danger); }
+.expense-card .expense-date { font-size: 12px; color: var(--text-2); }
+
+.badge-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+/* Alert banner */
+.loading-banner {
+  position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+  background: #1e293b; color: #fff; padding: 10px 20px; border-radius: 10px;
+  z-index: 200; display: none; font-size: 13px; box-shadow: var(--shadow-lg);
+}
+
+/* Print */
+@media print {
+  body * { visibility: hidden; }
+  .print-area, .print-area * { visibility: visible; }
+  .print-area { position: absolute; left: 0; top: 0; width: 100%; }
+  .receipt { font-size: 12px; }
+  .no-print { display: none !important; }
+}
+
+/* toast */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: #1e293b; color: #fff; padding: 12px 18px; border-radius: 10px;
+  box-shadow: var(--shadow-lg); z-index: 300; font-size: 13px; font-weight: 600;
+  transform: translateY(20px); opacity: 0; transition: all .25s;
+}
+.toast.show { transform: none; opacity: 1; }
+.toast.success { background: var(--green); }
+.toast.error { background: var(--danger); }
+
+/* Dashboard specific */
+.dash-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 18px; }
+@media (max-width: 1000px) { .dash-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="loading-banner" id="loadingBanner">Loading data...</div>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="logo-icon">S</div>
+    <div class="brand-text">
+      <div class="brand-title">ShopPOS</div>
+      <div class="brand-shop" id="brandShop">NOVAMART</div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-label">Menu</div>
+    <div class="nav-item active" data-page="pos">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="3"/><line x1="2" y1="9" x2="22" y2="9"/><line x1="6" y1="15" x2="10" y2="15"/><line x1="14" y1="15" x2="18" y2="15"/></svg>
+      POS
+    </div>
+    <div class="nav-item" data-page="dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg>
+      Dashboard
+    </div>
+    <div class="nav-item" data-page="products">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><line x1="12" y1="13" x2="12" y2="21"/></svg>
+      Products
+    </div>
+    <div class="nav-item" data-page="customers">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Customers
+    </div>
+    <div class="nav-item" data-page="sales">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      Sales
+    </div>
+    <div class="nav-item" data-page="expenses">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      Expenses
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    NOVAMART POS System<br>© 2026
+  </div>
+</aside>
+
+<!-- Main -->
+<div class="main">
+  <header class="topbar">
+    <div class="page-title" id="pageTitle">Point of Sale</div>
+    <div class="topbar-right">
+      <div class="clock">
+        <span id="clockTime">--:--:--</span>
+        <span class="clock-date" id="clockDate">------</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- POS PAGE -->
+    <section class="page active" id="page-pos">
+      <div class="pos-layout">
+        <div class="pos-products-col">
+          <div class="filter-bar">
+            <div class="search-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="posSearch" placeholder="Search products...">
+            </div>
+          </div>
+          <div class="cat-chips" id="posCats"></div>
+          <div class="product-grid" id="productGrid"></div>
+        </div>
+        <div class="pos-cart-col">
+          <div class="card cart-panel">
+            <h3>Shopping Cart</h3>
+            <div class="cart-meta">
+              <select class="customer-select" id="cartCustomer">
+                <option value="">Walk-in Customer</option>
+              </select>
+              <div class="discount-row">
+                <input type="number" class="discount-input" id="discountInput" placeholder="Discount" min="0" value="0">
+                <div class="discount-type-toggle">
+                  <button type="button" class="active" data-dtype="flat">PKR</button>
+                  <button type="button" data-dtype="percent">%</button>
+                </div>
+              </div>
+            </div>
+            <div class="cart-items" id="cartItems">
+              <div class="cart-empty">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                <p>Cart is empty</p>
+              </div>
+            </div>
+            <div class="cart-totals">
+              <div class="total-row"><span class="label">Subtotal</span><span id="cartSubtotal">₨ 0</span></div>
+              <div class="total-row"><span class="label">Discount</span><span id="cartDiscount">₨ 0</span></div>
+              <div class="total-row"><span class="label">Tax (0%)</span><span id="cartTax">₨ 0</span></div>
+              <div class="total-row grand"><span>Total</span><span id="cartTotal">₨ 0</span></div>
+            </div>
+            <div class="cart-actions">
+              <button class="btn btn-danger-soft btn-block" id="clearCartBtn">Clear</button>
+              <button class="btn btn-primary btn-block" id="payNowBtn" disabled>Pay Now</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DASHBOARD -->
+    <section class="page" id="page-dashboard">
+      <div class="stats-grid" id="dashStats"></div>
+      <div class="dash-grid">
+        <div class="card section" style="padding: 0; overflow: hidden;">
+          <div style="padding: 18px; border-bottom: 1px solid var(--border); font-weight: 700; font-size: 16px;">Recent Sales</div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Invoice</th><th>Customer</th><th>Items</th><th>Total</th><th>Payment</th><th>Date</th></tr></thead>
+              <tbody id="recentSalesBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card section" style="padding: 0; overflow: hidden;">
+          <div style="padding: 18px; border-bottom: 1px solid var(--border); font-weight: 700; font-size: 16px;">Low Stock Items</div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Product</th><th>Stock</th></tr></thead>
+              <tbody id="lowStockBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRODUCTS -->
+    <section class="page" id="page-products">
+      <div class="section">
+        <div class="filter-bar" style="margin-bottom: 16px;">
+          <div class="search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="productSearch" placeholder="Search products...">
+          </div>
+        </div>
+        <div class="card table-wrap">
+          <table>
+            <thead><tr><th>Image</th><th>Name</th><th>SKU</th><th>Category</th><th>Buy Price</th><th>Sell Price</th><th>Stock</th><th>Status</th></tr></thead>
+            <tbody id="productsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- CUSTOMERS -->
+    <section class="page" id="page-customers">
+      <div class="section">
+        <div class="card table-wrap">
+          <table>
+            <thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Address</th><th>Notes</th></tr></thead>
+            <tbody id="customersTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- SALES -->
+    <section class="page" id="page-sales">
+      <div class="stats-grid" id="salesStats"></div>
+      <div class="card table-wrap section">
+        <table>
+          <thead><tr><th>Invoice</th><th>Customer</th><th>Items</th><th>Subtotal</th><th>Discount</th><th>Total</th><th>Profit</th><th>Payment</th><th>Date</th></tr></thead>
+          <tbody id="salesTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- EXPENSES -->
+    <section class="page" id="page-expenses">
+      <div class="stats-grid" id="expensesStats"></div>
+      <div class="expense-grid" id="expensesGrid"></div>
+    </section>
+
+  </div>
+</div>
+
+<!-- Checkout Modal -->
+<div class="modal-overlay" id="checkoutModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Checkout</h3>
+      <button class="modal-close no-print" data-close="checkoutModal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="checkout-summary">
+        <div class="total-row"><span class="label">Invoice</span><span id="chkInvoice">-</span></div>
+        <div class="total-row"><span class="label">Customer</span><span id="chkCustomer">Walk-in Customer</span></div>
+        <div class="total-row"><span class="label">Items</span><span id="chkItems">0</span></div>
+        <div class="total-row"><span class="label">Subtotal</span><span id="chkSubtotal">₨ 0</span></div>
+        <div class="total-row"><span class="label">Discount</span><span id="chkDiscount">₨ 0</span></div>
+        <div class="total-row"><span class="label">Tax</span><span id="chkTax">₨ 0</span></div>
+        <div class="total-row grand"><span>Total</span><span id="chkTotal">₨ 0</span></div>
+      </div>
+      <div class="form-group">
+        <label>Payment Method</label>
+        <select class="payment-select" id="chkPaymentMethod">
+          <option value="Cash">Cash</option>
+          <option value="Card">Card</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-group" id="amountReceivedGroup">
+        <label>Amount Received</label>
+        <input type="number" class="amount-input" id="chkAmountReceived" min="0" placeholder="Amount received">
+      </div>
+      <div class="form-group">
+        <label>Change</label>
+        <div class="chg" id="chkChange">₨ 0</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline no-print" data-close="checkoutModal">Cancel</button>
+      <button class="btn btn-success no-print" id="completeSaleBtn">Complete Sale</button>
+    </div>
+  </div>
+</div>
+
+<!-- Receipt Modal -->
+<div class="modal-overlay" id="receiptModal">
+  <div class="modal receipt-wrap">
+    <div class="modal-header">
+      <h3>Receipt</h3>
+      <button class="modal-close no-print" data-close="receiptModal">&times;</button>
+    </div>
+    <div class="modal-body print-area" id="receiptBody"></div>
+    <div class="modal-footer no-print">
+      <button class="btn btn-outline" data-close="receiptModal">Close</button>
+      <button class="btn btn-primary" id="printReceiptBtn">Print Receipt</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  const LS_KEY = 'shoppos_data';
+  const symbol = '₨';
+
+  let DB = {
+    settings: [],
+    categories: [],
+    products: [],
+    customers: [],
+    sales: [],
+    expenses: []
+  };
+
+  const cart = [];
+  let discountType = 'flat';
+
+  const embeddedData = {
+    settings: [{ id: 'default', shopName: 'NOVAMART', phone: '03-465122452', address: 'CIVIC CENTER BAHRIA TOWN PHASE 4', email: 'info@novamart.pk', ntn: '12345678-9', storeTiming: '9:00AM TO 10:00PM', fridayBreak: '12:00PM TO 3:00PM', currency: 'PKR', currencySymbol: '₨', taxPercent: 0, receiptFooter: 'Thank you for shopping with us!', theme: 'light', lowStockThreshold: 10 }],
+    categories: [],
+    products: [],
+    customers: [],
+    sales: [],
+    expenses: []
+  };
+
+  const $ = (sel) => document.querySelector(sel);
+  const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+  function getSettings() { return DB.settings[0] || {}; }
+
+  function fmt(n) {
+    return symbol + ' ' + Number(n || 0).toLocaleString('en-US');
+  }
+
+  function getCategory(id) {
+    return DB.categories.find(c => c.id === id) || { name: '-' };
+  }
+
+  function genId() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+      const r = Math.random() * 16 | 0;
+      return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+  }
+
+  function nextInvoiceNumber() {
+    let max = 1024;
+    DB.sales.forEach(s => {
+      const m = String(s.invoiceNumber || '').match(/(\d+)/);
+      if (m) { const n = parseInt(m[1], 10); if (n > max) max = n; }
+    });
+    return 'INV-' + (max + 1);
+  }
+
+  function saveDB() {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(DB)); } catch (e) { console.warn('save failed', e); }
+  }
+
+  function loadLocal() {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (raw) { DB = JSON.parse(raw); return true; }
+    } catch (e) { console.warn(e); }
+    return false;
+  }
+
+  function populateFromJson(data) {
+    DB.settings = data.settings || [];
+    DB.categories = data.categories || [];
+    DB.products = data.products || [];
+    DB.customers = data.customers || [];
+    DB.sales = data.sales || [];
+    DB.expenses = data.expenses || [];
+    saveDB();
+  }
+
+  async function initData() {
+    $('#loadingBanner').style.display = 'block';
+    if (loadLocal()) {
+      $('#loadingBanner').style.display = 'none';
+      return;
+    }
+    try {
+      const res = await fetch('data.json');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      populateFromJson(data);
+      showToast('Data loaded from server', 'success');
+    } catch (e) {
+      console.warn('Fetch failed, using embedded data', e);
+      populateFromJson(embeddedData);
+      showToast('Server data unavailable, using local fallback', 'error');
+    }
+    $('#loadingBanner').style.display = 'none';
+  }
+
+  function showToast(msg, type) {
+    const t = $('#toast');
+    t.textContent = msg;
+    t.className = 'toast show ' + (type || '');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => { t.className = 'toast'; }, 2200);
+  }
+
+  /* ---------- Clock ---------- */
+  function updateClock() {
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    const ss = String(now.getSeconds()).padStart(2, '0');
+    $('#clockTime').textContent = hh + ':' + mm + ':' + ss;
+    $('#clockDate').textContent = now.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+  }
+  setInterval(updateClock, 1000);
+
+  /* ---------- Navigation ---------- */
+  const pageTitles = { pos: 'Point of Sale', dashboard: 'Dashboard', products: 'Products', customers: 'Customers', sales: 'Sales', expenses: 'Expenses' };
+
+  function navigate(page) {
+    $$('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.page === page));
+    $$('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + page));
+    $('#pageTitle').textContent = pageTitles[page] || 'POS';
+    if (page === 'dashboard') renderDashboard();
+    if (page === 'products') renderProductsTable();
+    if (page === 'customers') renderCustomersTable();
+    if (page === 'sales') renderSalesPage();
+    if (page === 'expenses') renderExpensesPage();
+    if (page === 'pos') renderProductGrid();
+  }
+
+  $$('.nav-item').forEach(item => {
+    item.addEventListener('click', () => navigate(item.dataset.page));
+  });
+
+  /* ---------- POS: categories & search ---------- */
+  let activeCat = 'all';
+
+  function renderCats() {
+    const holder = $('#posCats');
+    holder.innerHTML = '';
+    const all = document.createElement('button');
+    all.className = 'cat-chip' + (activeCat === 'all' ? ' active' : '');
+    all.textContent = 'All';
+    all.dataset.cat = 'all';
+    holder.appendChild(all);
+    (DB.categories || []).forEach(cat => {
+      const b = document.createElement('button');
+      b.className = 'cat-chip' + (activeCat === cat.id ? ' active' : '');
+      b.textContent = cat.name;
+      b.dataset.cat = cat.id;
+      holder.appendChild(b);
+    });
+  }
+
+  function renderProductGrid() {
+    const grid = $('#productGrid');
+    const q = ($('#posSearch').value || '').toLowerCase();
+    const lowThreshold = getSettings().lowStockThreshold || 10;
+
+    let list = (DB.products || []).filter(p => p.status !== 'inactive');
+    if (activeCat !== 'all') list = list.filter(p => p.categoryId === activeCat);
+    if (q) list = list.filter(p => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q));
+
+    grid.innerHTML = '';
+    if (!list.length) {
+      grid.innerHTML = '<div class="cart-empty" style="height:200px"><p>No products found</p></div>';
+      return;
+    }
+
+    list.forEach(p => {
+      const card = document.createElement('div');
+      const out = p.stock <= 0;
+      const low = !out && p.stock <= (p.minStock || lowThreshold);
+      card.className = 'product-card' + (out ? ' out-of-stock' : '') + (low ? ' low-stock' : '');
+
+      let badge;
+      if (out) badge = '<span class="stock-badge out">Out</span>';
+      else if (low) badge = '<span class="stock-badge low">Low: ' + p.stock + '</span>';
+      else badge = '<span class="stock-badge ok">' + p.stock + ' in stock</span>';
+
+      const img = p.image || '';
+      const imgHtml = img ? '<img src="' + img + '" alt="' + esc(p.name) + '" onerror="this.style.display=\'none\'">' : '<span style="font-size:30px">🛍️</span>';
+
+      card.innerHTML =
+        '<div class="product-img">' + imgHtml + '</div>' +
+        '<div class="product-name">' + esc(p.name) + '</div>' +
+        '<div class="product-price"><span class="price">' + fmt(p.sellingPrice) + '</span>' + badge + '</div>';
+
+      if (!out) {
+        card.addEventListener('click', () => addToCart(p));
+      }
+      grid.appendChild(card);
+    });
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (m) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+    });
+  }
+
+  /* ---------- Cart ---------- */
+  function addToCart(product) {
+    if (product.stock <= 0) return;
+    const existing = cart.find(i => i.productId === product.id);
+    if (existing) {
+      if (existing.qty >= product.stock) { showToast('Not enough stock', 'error'); return; }
+      existing.qty++;
+    } else {
+      cart.push({
+        productId: product.id,
+        name: product.name,
+        image: product.image,
+        price: product.sellingPrice,
+        buyingPrice: product.buyingPrice,
+        qty: 1
+      });
+    }
+    renderCart();
+  }
+
+  function changeQty(productId, delta) {
+    const item = cart.find(i => i.productId === productId);
+    if (!item) return;
+    const product = (DB.products || []).find(p => p.id === productId);
+    const newQty = item.qty + delta;
+    if (newQty <= 0) { removeItem(productId); return; }
+    if (product && newQty > product.stock) { showToast('Not enough stock', 'error'); return; }
+    item.qty = newQty;
+    renderCart();
+  }
+
+  function removeItem(productId) {
+    const idx = cart.findIndex(i => i.productId === productId);
+    if (idx >= 0) cart.splice(idx, 1);
+    renderCart();
+  }
+
+  function cartSubtotal() {
+    return cart.reduce((s, i) => s + i.price * i.qty, 0);
+  }
+
+  function cartDiscountAmount(subtotal) {
+    let d = parseFloat($('#discountInput').value) || 0;
+    if (d < 0) d = 0;
+    if (discountType === 'percent') {
+      if (d > 100) d = 100;
+      return subtotal * d / 100;
+    }
+    return d;
+  }
+
+  function cartTaxAmount(subtotal, discount) {
+    const taxPercent = parseFloat(getSettings().taxPercent) || 0;
+    return (subtotal - discount) * taxPercent / 100;
+  }
+
+  function renderCart() {
+    const holder = $('#cartItems');
+    if (!cart.length) {
+      holder.innerHTML = '<div class="cart-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg><p>Cart is empty</p></div>';
+    } else {
+      holder.innerHTML = '';
+      cart.forEach(item => {
+        const product = (DB.products || []).find(p => p.id === item.productId);
+        const max = product ? product.stock : item.qty;
+        const div = document.createElement('div');
+        div.className = 'cart-item';
+        const imgHtml = item.image
+          ? '<img src="' + item.image + '" alt="" onerror="this.style.display=\'none\'">'
+          : '<span style="font-size:20px">🛍️</span>';
+        div.innerHTML =
+          '<div class="cart-item-img">' + imgHtml + '</div>' +
+          '<div class="cart-item-info">' +
+            '<div class="cart-item-name" title="' + esc(item.name) + '">' + esc(item.name) + '</div>' +
+            '<div class="cart-item-price">' + fmt(item.price) + ' each</div>' +
+            '<div class="cart-item-qty">' +
+              '<button class="qty-btn" data-act="minus" data-id="' + item.productId + '">&minus;</button>' +
+              '<span>' + item.qty + '</span>' +
+              '<button class="qty-btn" data-act="plus" data-id="' + item.productId + '" ' + (item.qty >= max ? 'disabled' : '') + '>+</button>' +
+            '</div>' +
+          '</div>' +
+          '<div class="cart-item-line">' +
+            '<div class="cart-item-total">' + fmt(item.price * item.qty) + '</div>' +
+            '<button class="cart-item-remove" data-act="remove" data-id="' + item.productId + '" title="Remove">&times;</button>' +
+          '</div>';
+        holder.appendChild(div);
+      });
+    }
+
+    const subtotal = cartSubtotal();
+    const discount = cartDiscountAmount(subtotal);
+    const tax = cartTaxAmount(subtotal, discount);
+    const total = subtotal - discount + tax;
+
+    $('#cartSubtotal').textContent = fmt(subtotal);
+    $('#cartDiscount').textContent = '- ' + fmt(discount);
+    const tp = parseFloat(getSettings().taxPercent) || 0;
+    $('#cartTax').textContent = tp > 0 ? fmt(tax) : '₨ 0';
+    $('#cartTotal').textContent = fmt(total);
+    $('#payNowBtn').disabled = cart.length === 0;
+  }
+
+  /* ---------- Checkout ---------- */
+  function openCheckout() {
+    if (!cart.length) return;
+    const subtotal = cartSubtotal();
+    const discount = cartDiscountAmount(subtotal);
+    const tax = cartTaxAmount(subtotal, discount);
+    const total = subtotal - discount + tax;
+    const invoice = nextInvoiceNumber();
+
+    $('#chkInvoice').textContent = invoice;
+    $('#chkCustomer').textContent = selectedCustomerName();
+    $('#chkItems').textContent = cart.reduce((s, i) => s + i.qty, 0);
+    $('#chkSubtotal').textContent = fmt(subtotal);
+    $('#chkDiscount').textContent = '- ' + fmt(discount);
+    $('#chkTax').textContent = fmt(tax);
+    $('#chkTotal').textContent = fmt(total);
+    $('#chkAmountReceived').value = '';
+    $('#chkChange').textContent = fmt(0);
+    $('#chkPaymentMethod').value = 'Cash';
+    $('#checkoutModal').classList.add('show');
+  }
+
+  function selectedCustomerName() {
+    const v = $('#cartCustomer').value;
+    if (!v) return 'Walk-in Customer';
+    const c = (DB.customers || []).find(c => c.id === v);
+    return c ? c.name : 'Walk-in Customer';
+  }
+
+  $('#cartCustomer').addEventListener('change', () => { /* nothing */ });
+
+  $('#chkAmountReceived').addEventListener('input', updateChange);
+  $('#chkPaymentMethod').addEventListener('change', function () {
+    $('#amountReceivedGroup').style.display = this.value === 'Cash' ? 'flex' : 'none';
+    if (this.value !== 'Cash') { $('#chkAmountReceived').value = '0'; updateChange(); }
+  });
+
+  function updateChange() {
+    const totalEl = $('#chkTotal');
+    const total = parseFloat(String(totalEl.textContent).replace(/[₨,\s]/g, '')) || 0;
+    const received = parseFloat($('#chkAmountReceived').value) || 0;
+    $('#chkChange').textContent = fmt(Math.max(0, received - total));
+  }
+
+  function completeSale() {
+    if (!cart.length) return;
+    const subtotal = cartSubtotal();
+    const discount = cartDiscountAmount(subtotal);
+    const tax = cartTaxAmount(subtotal, discount);
+    const total = subtotal - discount + tax;
+    const method = $('#chkPaymentMethod').value;
+    const received = parseFloat($('#chkAmountReceived').value) || 0;
+    const change = Math.max(0, received - total);
+    const invoice = nextInvoiceNumber();
+    const customerId = $('#cartCustomer').value || null;
+    const customerName = customerId ? selectedCustomerName() : null;
+
+    const items = cart.map(i => ({
+      productId: i.productId,
+      name: i.name,
+      sku: (DB.products.find(p => p.id === i.productId) || {}).sku || '',
+      price: i.price,
+      buyingPrice: i.buyingPrice,
+      quantity: i.qty,
+      subtotal: i.price * i.qty
+    }));
+
+    const cost = cart.reduce((s, i) => s + i.buyingPrice * i.qty, 0);
+    const profit = total - cost;
+
+    const sale = {
+      id: genId(),
+      invoiceNumber: invoice,
+      items: items,
+      subtotal: Math.round(subtotal * 100) / 100,
+      discount: Math.round(discount * 100) / 100,
+      discountType: discountType,
+      tax: Math.round(tax * 100) / 100,
+      taxPercent: parseFloat(getSettings().taxPercent) || 0,
+      total: Math.round(total * 100) / 100,
+      cost: Math.round(cost * 100) / 100,
+      profit: Math.round(profit * 100) / 100,
+      paymentMethod: method,
+      amountReceived: received,
+      change: change,
+      customerId: customerId,
+      customerName: customerName,
+      status: 'Completed',
+      createdAt: Date.now(),
+      cashier: 'Cashier 1'
+    };
+
+    DB.sales.push(sale);
+
+    items.forEach(it => {
+      const p = DB.products.find(p => p.id === it.productId);
+      if (p) {
+        p.stock -= it.quantity;
+        p.updatedAt = Date.now();
+      }
+    });
+
+    saveDB();
+    cart.length = 0;
+    $('#discountInput').value = '0';
+    $('#checkoutModal').classList.remove('show');
+    renderCart();
+    renderProductGrid();
+    showReceipt(sale);
+    showToast('Sale completed: ' + invoice, 'success');
+  }
+
+  /* ---------- Receipt ---------- */
+  function showReceipt(sale) {
+    const settings = getSettings();
+    const body = $('#receiptBody');
+    const now = new Date(sale.createdAt);
+    const dateStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+    let itemsHtml = '';
+    sale.items.forEach(it => {
+      itemsHtml += '<tr><td>' + esc(it.name) + '</td><td style="text-align:right">' + it.quantity + ' × ' + fmt(it.price) + '</td></tr>' +
+        '<tr><td></td><td style="text-align:right; font-weight:700">' + fmt(it.subtotal) + '</td></tr>';
+    });
+
+    body.innerHTML =
+      '<div class="receipt">' +
+        '<div class="r-head">' +
+          '<div class="r-shop">' + esc(settings.shopName || 'NOVAMART') + '</div>' +
+          '<div>' + esc(settings.address || '') + '</div>' +
+          '<div>Phone: ' + esc(settings.phone || '') + '</div>' +
+          '<div>Email: ' + esc(settings.email || '') + '</div>' +
+          '<div>NTN: ' + esc(settings.ntn || '') + '</div>' +
+        '</div>' +
+        '<div class="r-centered"><strong>INVOICE ' + sale.invoiceNumber + '</strong></div>' +
+        '<div class="r-centered">Date: ' + dateStr + ' ' + timeStr + '</div>' +
+        '<div class="r-centered">Cashier: ' + esc(sale.cashier || 'Cashier 1') + '</div>' +
+        '<div class="r-centered">Customer: ' + esc(sale.customerName || 'Walk-in Customer') + '</div>' +
+        '<hr>' +
+        '<table>' + itemsHtml + '</table>' +
+        '<hr>' +
+        '<div class="r-row"><span class="r-l">Subtotal</span><span>' + fmt(sale.subtotal) + '</span></div>' +
+        (sale.discount > 0 ? '<div class="r-row"><span class="r-l">Discount</span><span>- ' + fmt(sale.discount) + '</span></div>' : '') +
+        (sale.tax > 0 ? '<div class="r-row"><span class="r-l">Tax</span><span>' + fmt(sale.tax) + '</span></div>' : '') +
+        '<div class="r-total-row" style="border-top:1px solid #94a3b8; padding-top:6px; margin-top:6px;"><span>TOTAL</span><span>' + fmt(sale.total) + '</span></div>' +
+        '<hr>' +
+        '<div class="r-row"><span class="r-l">Payment</span><span>' + esc(sale.paymentMethod) + '</span></div>' +
+        '<div class="r-row"><span class="r-l">Received</span><span>' + fmt(sale.amountReceived || 0) + '</span></div>' +
+        '<div class="r-row"><span class="r-l">Change</span><span>' + fmt(sale.change || 0) + '</span></div>' +
+        '<hr>' +
+        '<div class="r-footer">' + esc(settings.receiptFooter || 'Thank you for shopping with us!') + '<br>Visit again!</div>' +
+      '</div>';
+
+    $('#receiptModal').classList.add('show');
+  }
+
+  $('#printReceiptBtn').addEventListener('click', () => window.print());
+
+  /* ---------- Dashboard ---------- */
+  function isToday(ts) {
+    const d = new Date(ts);
+    const now = new Date();
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+  }
+
+  function renderDashboard() {
+    const sales = (DB.sales || []).slice().sort((a, b) => b.createdAt - a.createdAt);
+    const todaySales = sales.filter(s => isToday(s.createdAt));
+    const todayRevenue = todaySales.reduce((s, x) => s + x.total, 0);
+    const totalRevenue = sales.reduce((s, x) => s + x.total, 0);
+    const totalProfit = sales.reduce((s, x) => s + x.profit, 0);
+    const totalExpenses = (DB.expenses || []).reduce((s, x) => s + x.amount, 0);
+    const lowThreshold = getSettings().lowStockThreshold || 10;
+    const lowStock = (DB.products || []).filter(p => p.stock > 0 && p.stock <= (p.minStock || lowThreshold));
+    const outStock = (DB.products || []).filter(p => p.stock <= 0);
+
+    const cards = [
+      { label: "Today's Sales", value: todaySales.length, sub: fmt(todayRevenue) + ' revenue', color: 'var(--primary)', bg: 'var(--primary-100)', icon: '🛒' },
+      { label: 'Total Revenue', value: fmt(totalRevenue), sub: totalRevenue.toLocaleString() + ' PKR', color: 'var(--green)', bg: '#d1fae5', icon: '💰' },
+      { label: 'Total Profit', value: fmt(totalProfit), sub: 'Across all sales', color: 'var(--amber)', bg: '#fef3c7', icon: '📈' },
+      { label: 'Total Expenses', value: fmt(totalExpenses), sub: (DB.expenses || []).length + ' expense records', color: 'var(--danger)', bg: 'var(--danger-bg)', icon: '💸' },
+      { label: 'Products', value: (DB.products || []).length, sub: (DB.categories || []).length + ' categories', color: 'var(--primary-dark)', bg: 'var(--primary-100)', icon: '📦' },
+      { label: 'Low Stock Alerts', value: lowStock.length + outStock.length, sub: outStock.length + ' out of stock', color: '#dc2626', bg: 'var(--danger-bg)', icon: '⚠️' }
+    ];
+
+    $('#dashStats').innerHTML = '';
+    cards.forEach(c => {
+      const div = document.createElement('div');
+      div.className = 'card stat-card';
+      div.innerHTML =
+        '<div class="stat-icon" style="background:' + c.bg + '">' + c.icon + '</div>' +
+        '<div class="stat-label">' + c.label + '</div>' +
+        '<div class="stat-value" style="color:' + c.color + '">' + c.value + '</div>' +
+        '<div class="stat-sub">' + c.sub + '</div>';
+      $('#dashStats').appendChild(div);
+    });
+
+    const recBody = $('#recentSalesBody');
+    recBody.innerHTML = '';
+    sales.slice(0, 5).forEach(s => {
+      const tr = document.createElement('tr');
+      const date = new Date(s.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+      tr.innerHTML =
+        '<td style="font-weight:700;color:var(--primary-dark)">' + esc(s.invoiceNumber) + '</td>' +
+        '<td>' + esc(s.customerName || 'Walk-in') + '</td>' +
+        '<td>' + s.items.reduce((x, i) => x + i.quantity, 0) + '</td>' +
+        '<td style="font-weight:700">' + fmt(s.total) + '</td>' +
+        '<td><span class="pill ' + (s.paymentMethod === 'Cash' ? 'pill-green' : s.paymentMethod === 'Card' ? 'pill-indigo' : 'pill-gray') + '">' + esc(s.paymentMethod) + '</span></td>' +
+        '<td>' + date + '</td>';
+      recBody.appendChild(tr);
+    });
+    if (!sales.length) recBody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-2)">No sales yet</td></tr>';
+
+    const lowBody = $('#lowStockBody');
+    lowBody.innerHTML = '';
+    const lowItems = [].concat(lowStock, outStock);
+    lowItems.forEach(p => {
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td style="font-weight:600">' + esc(p.name) + '</td>' +
+        '<td><span class="pill ' + (p.stock <= 0 ? 'pill-red' : 'pill-gray') + '">' + p.stock + ' left</span></td>';
+      lowBody.appendChild(tr);
+    });
+    if (!lowItems.length) lowBody.innerHTML = '<tr><td colspan="2" style="text-align:center;color:var(--text-2)">All stock levels look good</td></tr>';
+  }
+
+  /* ---------- Products page ---------- */
+  function renderProductsTable() {
+    const q = ($('#productSearch').value || '').toLowerCase();
+    let list = (DB.products || []).filter(p => !q || p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q) || (p.barcode || '').toLowerCase().includes(q));
+    const body = $('#productsTableBody');
+    body.innerHTML = '';
+    list.forEach(p => {
+      const tr = document.createElement('tr');
+      const cat = getCategory(p.categoryId);
+      const imgHtml = p.image ? '<img src="' + p.image + '" alt="" onerror="this.style.display=\'none\'">' : '🛍️';
+      const statusBadge = p.stock <= 0
+        ? '<span class="pill pill-red">Out of stock</span>'
+        : (p.stock <= (p.minStock || 10) ? '<span class="pill pill-gray">Low stock</span>' : '<span class="pill pill-green">In stock</span>');
+      tr.innerHTML =
+        '<td><div class="td-img">' + imgHtml + '</div></td>' +
+        '<td style="font-weight:600">' + esc(p.name) + '</td>' +
+        '<td>' + esc(p.sku) + '</td>' +
+        '<td><span class="pill pill-indigo">' + esc(cat.name) + '</span></td>' +
+        '<td>' + fmt(p.buyingPrice) + '</td>' +
+        '<td style="font-weight:700;color:var(--primary-dark)">' + fmt(p.sellingPrice) + '</td>' +
+        '<td><span class="pill ' + (p.stock <= 0 ? 'pill-red' : p.stock <= (p.minStock || 10) ? 'pill-gray' : 'pill-green') + '">' + p.stock + '</span></td>' +
+        '<td>' + statusBadge + '</td>';
+      body.appendChild(tr);
+    });
+    if (!list.length) body.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-2)">No products found</td></tr>';
+  }
+
+  /* ---------- Customers page ---------- */
+  function renderCustomersTable() {
+    const body = $('#customersTableBody');
+    body.innerHTML = '';
+    (DB.customers || []).forEach(c => {
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td style="font-weight:700">' + esc(c.name) + '</td>' +
+        '<td>' + esc(c.phone) + '</td>' +
+        '<td>' + esc(c.email) + '</td>' +
+        '<td>' + esc(c.address) + '</td>' +
+        '<td style="color:var(--text-2)">' + esc(c.notes || '') + '</td>';
+      body.appendChild(tr);
+    });
+    if (!(DB.customers || []).length) body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-2)">No customers</td></tr>';
+  }
+
+  /* ---------- Sales page ---------- */
+  function renderSalesPage() {
+    const sales = (DB.sales || []).slice().sort((a, b) => b.createdAt - a.createdAt);
+    const total = sales.length;
+    const revenue = sales.reduce((s, x) => s + x.total, 0);
+    const profit = sales.reduce((s, x) => s + x.profit, 0);
+
+    const cards = [
+      { label: 'Total Sales', value: total, sub: 'all transactions', color: 'var(--primary)', bg: 'var(--primary-100)', icon: '🧾' },
+      { label: 'Total Revenue', value: fmt(revenue), sub: revenue.toLocaleString() + ' PKR', color: 'var(--green)', bg: '#d1fae5', icon: '💰' },
+      { label: 'Total Profit', value: fmt(profit), sub: profit.toLocaleString() + ' PKR', color: 'var(--amber)', bg: '#fef3c7', icon: '📈' }
+    ];
+
+    $('#salesStats').innerHTML = '';
+    cards.forEach(c => {
+      const div = document.createElement('div');
+      div.className = 'card stat-card';
+      div.innerHTML =
+        '<div class="stat-icon" style="background:' + c.bg + '">' + c.icon + '</div>' +
+        '<div class="stat-label">' + c.label + '</div>' +
+        '<div class="stat-value" style="color:' + c.color + '">' + c.value + '</div>' +
+        '<div class="stat-sub">' + c.sub + '</div>';
+      $('#salesStats').appendChild(div);
+    });
+
+    const body = $('#salesTableBody');
+    body.innerHTML = '';
+    sales.forEach(s => {
+      const tr = document.createElement('tr');
+      const date = new Date(s.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      tr.innerHTML =
+        '<td style="font-weight:700;color:var(--primary-dark)">' + esc(s.invoiceNumber) + '</td>' +
+        '<td>' + esc(s.customerName || 'Walk-in') + '</td>' +
+        '<td>' + s.items.reduce((x, i) => x + i.quantity, 0) + '</td>' +
+        '<td>' + fmt(s.subtotal) + '</td>' +
+        '<td>' + (s.discount > 0 ? '- ' + fmt(s.discount) : '—') + '</td>' +
+        '<td style="font-weight:700">' + fmt(s.total) + '</td>' +
+        '<td style="color:var(--green);font-weight:700">' + fmt(s.profit) + '</td>' +
+        '<td><span class="pill ' + (s.paymentMethod === 'Cash' ? 'pill-green' : s.paymentMethod === 'Card' ? 'pill-indigo' : 'pill-gray') + '">' + esc(s.paymentMethod) + '</span></td>' +
+        '<td>' + date + '</td>';
+      body.appendChild(tr);
+    });
+    if (!sales.length) body.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-2)">No sales recorded</td></tr>';
+  }
+
+  /* ---------- Expenses page ---------- */
+  function renderExpensesPage() {
+    const expenses = (DB.expenses || []).slice().sort((a, b) => (b.date || 0) - (a.date || 0));
+    const total = expenses.reduce((s, x) => s + x.amount, 0);
+    const categories = {};
+    expenses.forEach(e => { categories[e.category] = (categories[e.category] || 0) + 1; });
+
+    const cards = [
+      { label: 'Total Expenses', value: fmt(total), sub: expenses.length + ' expense records', color: 'var(--danger)', bg: 'var(--danger-bg)', icon: '💸' },
+      { label: 'Categories', value: Object.keys(categories).length, sub: 'expense categories', color: 'var(--primary)', bg: 'var(--primary-100)', icon: '🗂️' }
+    ];
+
+    $('#expensesStats').innerHTML = '';
+    cards.forEach(c => {
+      const div = document.createElement('div');
+      div.className = 'card stat-card';
+      div.innerHTML =
+        '<div class="stat-icon" style="background:' + c.bg + '">' + c.icon + '</div>' +
+        '<div class="stat-label">' + c.label + '</div>' +
+        '<div class="stat-value" style="color:' + c.color + '">' + c.value + '</div>' +
+        '<div class="stat-sub">' + c.sub + '</div>';
+      $('#expensesStats').appendChild(div);
+    });
+
+    const grid = $('#expensesGrid');
+    grid.innerHTML = '';
+    const catColors = { Rent: '#ec4899', Salary: '#f59e0b', Electricity: '#6366f1', Internet: '#06b6d4', Transport: '#10b981', Other: '#64748b' };
+    expenses.forEach(e => {
+      const div = document.createElement('div');
+      div.className = 'card expense-card';
+      const color = catColors[e.category] || '#6366f1';
+      const date = new Date(e.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      div.style.borderLeftColor = color;
+      div.innerHTML =
+        '<div class="expense-title">' + esc(e.title) + '</div>' +
+        '<div class="expense-cat"><span class="pill" style="background:' + color + '22;color:' + color + '">' + esc(e.category) + '</span></div>' +
+        (e.notes ? '<div style="font-size:12px;color:var(--text-2)">' + esc(e.notes) + '</div>' : '') +
+        '<div class="expense-meta"><span class="expense-amount">' + fmt(e.amount) + '</span><span class="expense-date">' + date + '</span></div>';
+      grid.appendChild(div);
+    });
+    if (!expenses.length) grid.innerHTML = '<div class="card" style="padding:40px;text-align:center;color:var(--text-2)">No expenses recorded</div>';
+  }
+
+  /* ---------- Event listeners ---------- */
+  $('#posSearch').addEventListener('input', renderProductGrid);
+  $('#productSearch').addEventListener('input', renderProductsTable);
+
+  $('#posCats').addEventListener('click', function (e) {
+    const chip = e.target.closest('.cat-chip');
+    if (!chip) return;
+    activeCat = chip.dataset.cat || 'all';
+    $$('.cat-chip').forEach(c => c.classList.toggle('active', c.dataset.cat === activeCat));
+    renderProductGrid();
+  });
+
+  $('#cartItems').addEventListener('click', function (e) {
+    const btn = e.target.closest('button');
+    if (!btn || !btn.dataset.act) return;
+    const id = btn.dataset.id;
+    if (btn.dataset.act === 'plus') changeQty(id, 1);
+    else if (btn.dataset.act === 'minus') changeQty(id, -1);
+    else if (btn.dataset.act === 'remove') removeItem(id);
+  });
+
+  $('#clearCartBtn').addEventListener('click', function () {
+    cart.length = 0;
+    $('#discountInput').value = '0';
+    renderCart();
+  });
+
+  $('#payNowBtn').addEventListener('click', openCheckout);
+
+  $('#discountInput').addEventListener('input', renderCart);
+  $$('.discount-type-toggle button').forEach(btn => {
+    btn.addEventListener('click', function () {
+      discountType = this.dataset.dtype;
+      $$('.discount-type-toggle button').forEach(b => b.classList.toggle('active', b === this));
+      renderCart();
+    });
+  });
+
+  $('#completeSaleBtn').addEventListener('click', completeSale);
+
+  $$('.modal-close').forEach(btn => {
+    btn.addEventListener('click', function () {
+      document.getElementById(this.dataset.close).classList.remove('show');
+    });
+  });
+
+  $$('.modal-overlay').forEach(ov => {
+    ov.addEventListener('click', function (e) {
+      if (e.target === this) this.classList.remove('show');
+    });
+  });
+
+  $('#discountInput').addEventListener('change', function () {
+    let v = parseFloat(this.value) || 0;
+    if (v < 0) v = 0;
+    if (discountType === 'percent' && v > 100) v = 100;
+    this.value = v;
+    renderCart();
+  });
+
+  /* ---------- Customer dropdown ---------- */
+  function renderCustomerDropdown() {
+    const sel = $('#cartCustomer');
+    sel.innerHTML = '';
+    const opt = document.createElement('option');
+    opt.value = '';
+    opt.textContent = 'Walk-in Customer';
+    sel.appendChild(opt);
+    (DB.customers || []).forEach(c => {
+      const o = document.createElement('option');
+      o.value = c.id;
+      o.textContent = c.name + (c.phone ? ' (' + c.phone + ')' : '');
+      sel.appendChild(o);
+    });
+  }
+
+  /* ---------- Init ---------- */
+  async function start() {
+    await initData();
+    const settings = getSettings();
+    $('#brandShop').textContent = settings.shopName || 'NOVAMART';
+    renderCats();
+    renderCustomerDropdown();
+    renderProductGrid();
+    renderDashboard();
+    renderProductsTable();
+    renderCustomersTable();
+    renderSalesPage();
+    renderExpensesPage();
+    renderCart();
+    updateClock();
+  }
+
+  start();
+
+})();
+</script>
+</body>
+</html>
